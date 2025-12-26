@@ -1,0 +1,9 @@
+body {
+  font-family: "Noto Sans JP", "Hiragino Sans", "Yu Gothic", sans-serif;
+}
+
+@media (max-width: 576px) {
+  .table-responsive {
+    font-size: 0.85rem;
+  }
+}
