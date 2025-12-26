@@ -7,18 +7,44 @@ from threading import Lock
 from dotenv import load_dotenv
 from flask import Flask, redirect, render_template, request, url_for
 
-load_dotenv()
-
 app = Flask(__name__)
 
-DEFAULT_MAC = os.getenv("DEFAULT_MAC", "")
-DEFAULT_BROADCAST = os.getenv("DEFAULT_BROADCAST", "255.255.255.255")
-DEFAULT_PORT = int(os.getenv("DEFAULT_PORT", "9"))
+def _get_int_env(name: str, default: int) -> int:
+    value = os.getenv(name, str(default))
+    try:
+        return int(value)
+    except ValueError:
+        return default
 
-LOG_LIMIT = int(os.getenv("LOG_LIMIT", "50"))
+
+def get_config() -> dict:
+    return {
+        "default_mac": os.getenv("DEFAULT_MAC", ""),
+        "default_broadcast": os.getenv("DEFAULT_BROADCAST", "255.255.255.255"),
+        "default_port": _get_int_env("DEFAULT_PORT", 9),
+        "log_limit": _get_int_env("LOG_LIMIT", 50),
+    }
+
 
 log_lock = Lock()
-logs = deque(maxlen=LOG_LIMIT)
+logs = deque(maxlen=get_config()["log_limit"])
+
+
+def update_log_limit(new_limit: int) -> None:
+    global logs
+    safe_limit = max(new_limit, 0)
+    if logs.maxlen == safe_limit:
+        return
+    with log_lock:
+        entries = list(logs)[:safe_limit]
+        logs = deque(entries, maxlen=safe_limit)
+
+
+@app.before_request
+def refresh_env() -> None:
+    load_dotenv(override=True)
+    config = get_config()
+    update_log_limit(config["log_limit"])
 
 
 def normalize_mac(raw_mac: str) -> str:
@@ -53,10 +79,11 @@ def add_log(status: str, message: str, details: dict) -> None:
 
 @app.route("/", methods=["GET", "POST"])
 def index():
+    config = get_config()
     if request.method == "POST":
         mac = request.form.get("mac", "").strip()
-        broadcast = request.form.get("broadcast", DEFAULT_BROADCAST).strip()
-        port_raw = request.form.get("port", str(DEFAULT_PORT)).strip()
+        broadcast = request.form.get("broadcast", config["default_broadcast"]).strip()
+        port_raw = request.form.get("port", str(config["default_port"])).strip()
         try:
             port = int(port_raw)
             send_magic_packet(mac, broadcast, port)
@@ -77,9 +104,9 @@ def index():
         log_entries = list(logs)
     return render_template(
         "index.html",
-        default_mac=DEFAULT_MAC,
-        default_broadcast=DEFAULT_BROADCAST,
-        default_port=DEFAULT_PORT,
+        default_mac=config["default_mac"],
+        default_broadcast=config["default_broadcast"],
+        default_port=config["default_port"],
         logs=log_entries,
     )
 
