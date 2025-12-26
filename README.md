@@ -43,6 +43,19 @@ Windows の場合は `run.bat` を実行すると同じ手順で起動できま�
 
 ブラウザで `http://localhost:8200` にアクセスしてください。
 
+## Linux環境でのイメージビルド手順
+
+```bash
+# 作業ディレクトリへ移動
+cd /path/to/wol-app
+
+# .env を用意 (必要に応じて編集)
+cp .env.example .env
+
+# Linux環境でDockerイメージをビルド
+docker build -t wol-app:latest .
+```
+
 ## 使い方
 
 1. MAC アドレス、ブロードキャスト IP、ポートを入力します。
