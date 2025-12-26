@@ -6,11 +6,37 @@ if not exist .env (
   copy .env.example .env >nul
 )
 
-docker build -t wol-app .
+if not exist .venv\Scripts\python.exe (
+  python -m venv .venv
+  if errorlevel 1 (
+    echo Failed to create virtual environment. Is Python installed?
+    echo Press any key to close this window...
+    pause >nul
+    exit /b 1
+  )
+)
+
+.venv\Scripts\python.exe -m pip install --upgrade pip
 if errorlevel 1 (
-  echo Docker build failed.
+  echo Failed to upgrade pip.
+  echo Press any key to close this window...
+  pause >nul
   exit /b 1
 )
 
-docker run --rm -p 8200:8200 --env-file .env wol-app
+.venv\Scripts\python.exe -m pip install -r requirements.txt
+if errorlevel 1 (
+  echo Failed to install dependencies.
+  echo Press any key to close this window...
+  pause >nul
+  exit /b 1
+)
+
+.venv\Scripts\python.exe app.py
+if errorlevel 1 (
+  echo App exited with an error.
+  echo Press any key to close this window...
+  pause >nul
+  exit /b 1
+)
 endlocal
