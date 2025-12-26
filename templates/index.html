@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Wake-on-LAN Sender</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN"
+      crossorigin="anonymous"
+    />
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  </head>
+  <body class="bg-light">
+    <main class="container py-4">
+      <header class="mb-4 text-center">
+        <h1 class="h3">Wake-on-LAN 送信</h1>
+        <p class="text-muted">モバイルからも操作しやすいUIで送信先を選択できます。</p>
+      </header>
+
+      <section class="card shadow-sm mb-4">
+        <div class="card-body">
+          <form method="post" class="row g-3">
+            <div class="col-12">
+              <label for="mac" class="form-label">MACアドレス</label>
+              <input
+                type="text"
+                class="form-control"
+                id="mac"
+                name="mac"
+                value="{{ default_mac }}"
+                placeholder="例: 00:11:22:33:44:55"
+                required
+              />
+            </div>
+            <div class="col-md-8">
+              <label for="broadcast" class="form-label">ブロードキャストIP</label>
+              <input
+                type="text"
+                class="form-control"
+                id="broadcast"
+                name="broadcast"
+                value="{{ default_broadcast }}"
+              />
+            </div>
+            <div class="col-md-4">
+              <label for="port" class="form-label">ポート</label>
+              <input
+                type="number"
+                class="form-control"
+                id="port"
+                name="port"
+                min="1"
+                max="65535"
+                value="{{ default_port }}"
+              />
+            </div>
+            <div class="col-12">
+              <button type="submit" class="btn btn-primary w-100">
+                送信
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <section class="card shadow-sm">
+        <div class="card-body">
+          <div class="d-flex align-items-center justify-content-between mb-3">
+            <h2 class="h5 mb-0">送信ログ</h2>
+            <span class="badge text-bg-secondary">最新 {{ logs|length }} 件</span>
+          </div>
+          {% if logs %}
+          <div class="table-responsive">
+            <table class="table table-sm align-middle">
+              <thead>
+                <tr>
+                  <th>時刻</th>
+                  <th>状態</th>
+                  <th>メッセージ</th>
+                  <th>送信先</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for entry in logs %}
+                <tr>
+                  <td class="text-nowrap">{{ entry.timestamp }}</td>
+                  <td>
+                    <span class="badge {{ 'text-bg-success' if entry.status == 'success' else 'text-bg-danger' }}">
+                      {{ entry.status }}
+                    </span>
+                  </td>
+                  <td>{{ entry.message }}</td>
+                  <td>
+                    <div class="small text-muted">MAC: {{ entry.details.mac }}</div>
+                    <div class="small text-muted">
+                      {{ entry.details.broadcast }}:{{ entry.details.port }}
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <p class="text-muted mb-0">まだ送信ログがありません。</p>
+          {% endif %}
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
